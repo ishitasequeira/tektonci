@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: maven-build
+spec:
+  workspaces:
+  - name: local-maven-repo
+  resources:
+  - name: app-git
+    type: git
+  tasks:
+  - name: build
+    taskRef:
+      name: mvn
+    resources:
+      inputs:
+      - name: source
+        resource: app-git
+    params:
+    - name: GOALS
+      value: ["clean install -DskipTests"]
+    workspaces:
+    - name: maven-repo
+      workspace: local-maven-repo
+  - name: package
+    taskRef:
+      name: mvn
+    runAfter: ["build"]
+    resources:
+      inputs:
+      - name: source
+        resource: app-git
+    params:
+    - name: GOALS
+      value: ["package -DskipTests"]
+    workspaces:
+    - name: maven-repo
+      workspace: local-maven-repo
